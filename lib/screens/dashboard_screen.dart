@@ -4,7 +4,7 @@ import '../widgets/action_buttons.dart';
 import '../widgets/transaction_history.dart';
 import '../widgets/html_dashboard_renderer.dart';
 import '../widgets/portfolio_card.dart';
-import '../widgets/checkout_widget.dart'; // Ensure you import your checkout!
+import 'package:kitepay_app_2026/widgets/checkout_widget.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -189,7 +189,7 @@ class DashboardScreen extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 450),
-          child: const CheckoutWidget(),
+          child: CheckoutWidget(),
         ),
       ),
     );
