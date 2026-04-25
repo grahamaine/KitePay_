@@ -14,36 +14,42 @@ class KiteHealthService {
 
   KiteHealthService() {
     _client = Web3Client(_rpcUrl, Client());
+    // Start the heartbeat every 3 seconds
     Timer.periodic(const Duration(seconds: 3), (_) => checkHealth());
   }
 
   Future<void> checkHealth() async {
-    // Create and start the stopwatch in one go using the cascade operator
     final stopwatch = Stopwatch()..start();
 
     try {
+      // 1. Get the latest block details (for timestamp/drift)
       final block = await _client.getBlockInformation(blockNumber: 'latest');
-      final int latency = stopwatch.elapsedMilliseconds;
 
+      // 2. Get the block height directly (Fixes the 'blockNumber' getter error)
+      final int currentBlockHeight = await _client.getBlockNumber();
+
+      final int latency = stopwatch.elapsedMilliseconds;
       final int now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+      // Convert block timestamp to seconds
       final int blockTimestamp = block.timestamp.millisecondsSinceEpoch ~/ 1000;
       final int drift = now - blockTimestamp;
 
+      // Determine network status based on 2026 performance standards
       KiteStatus status = KiteStatus.healthy;
-      if (latency > 800 || drift > 10) status = KiteStatus.degraded;
-      if (latency > 3000 || drift > 30) status = KiteStatus.stuck;
+      if (latency > 800 || drift > 15) status = KiteStatus.degraded;
+      if (latency > 3000 || drift > 45) status = KiteStatus.stuck;
 
-      // SUCCESS: Broadcast metrics to the UI
       _healthController.add(
         KiteHealthMetrics(
           latency: latency,
           drift: drift,
           status: status,
-          blockNumber: block.blockNumber,
+          blockNumber: currentBlockHeight.toInt(), // Convert BigInt to int
         ),
       );
     } catch (e) {
-      // FAILURE: Notify listeners that the service is offline
+      // If the RPC fails entirely
       _healthController.add(
         KiteHealthMetrics(
           latency: 0,
