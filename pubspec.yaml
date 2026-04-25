@@ -12,6 +12,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_riverpod: ^3.3.1
   flutter_dotenv: ^6.0.1
+
+  # --- ADD THIS LINE ---
+  http: ^1.2.1
   
   # --- TURNKEY & CRYPTO ---
   turnkey_sdk_flutter: ^1.2.1
