@@ -10,7 +10,8 @@
         "cupertino_icons",
         "flutter",
         "flutter_html",
-        "flutter_riverpod"
+        "flutter_riverpod",
+        "kitepay_sdk"
       ],
       "devDependencies": [
         "flutter_lints",
@@ -40,6 +41,13 @@
         "stream_channel",
         "test_api",
         "vector_math"
+      ]
+    },
+    {
+      "name": "kitepay_sdk",
+      "version": "0.0.1",
+      "dependencies": [
+        "flutter"
       ]
     },
     {

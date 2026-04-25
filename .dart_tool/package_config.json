@@ -164,6 +164,12 @@
       "languageVersion": "3.4"
     },
     {
+      "name": "kitepay_sdk",
+      "rootUri": "../kitepay_sdk",
+      "packageUri": "lib/",
+      "languageVersion": "3.11"
+    },
+    {
       "name": "leak_tracker",
       "rootUri": "file:///C:/Users/Lenovo/AppData/Local/Pub/Cache/hosted/pub.dev/leak_tracker-11.0.2",
       "packageUri": "lib/",

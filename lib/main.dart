@@ -1,14 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_html/flutter_html.dart';
 
-// Import logic and screens
-import 'providers/app_providers.dart';
-import 'screens/dashboard_screen.dart';
-import 'screens/portfolio_screen.dart';
-import 'screens/swap_screen.dart';
+// --- STATE MANAGEMENT ---
+
+// A simple model for our Payment State
+class PaymentState {
+  final bool isLoading;
+  final String? errorMessage;
+  final bool isSuccess;
+
+  PaymentState({this.isLoading = false, this.errorMessage, this.isSuccess = false});
+
+  PaymentState copyWith({bool? isLoading, String? errorMessage, bool? isSuccess}) {
+    return PaymentState(
+      isLoading: isLoading ?? this.isLoading,
+      errorMessage: errorMessage ?? this.errorMessage,
+      isSuccess: isSuccess ?? this.isSuccess,
+    );
+  }
+}
+
+// The Logic Controller (Notifier)
+class PaymentNotifier extends Notifier<PaymentState> {
+  @override
+  PaymentState build() => PaymentState();
+
+  Future<void> processPayment(double amount) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    // Simulate an SDK call to KitePay
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (amount <= 0) {
+      state = state.copyWith(isLoading: false, errorMessage: "Invalid Amount");
+    } else {
+      state = state.copyWith(isLoading: false, isSuccess: true);
+    }
+  }
+
+  void reset() => state = PaymentState();
+}
+
+// The Provider that the UI will listen to
+final paymentProvider = NotifierProvider<PaymentNotifier, PaymentState>(() {
+  return PaymentNotifier();
+});
+
+// --- MAIN APP ENTRY ---
 
 void main() {
-  runApp(const ProviderScope(child: KitePayApp()));
+  runApp(
+    const ProviderScope(child: KitePayApp()),
+  );
 }
 
 class KitePayApp extends StatelessWidget {
@@ -17,120 +61,84 @@ class KitePayApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'KitePay DApp',
-      debugShowCheckedModeBanner: false,
+      title: 'KitePay 2026',
       theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0D1117),
-        primaryColor: const Color(0xFF58A6FF),
-        fontFamily: 'Inter',
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent),
+        useMaterial3: true,
       ),
-      home: const MainLayoutShell(),
+      home: const CheckoutScreen(),
     );
   }
 }
 
-class MainLayoutShell extends ConsumerStatefulWidget {
-  const MainLayoutShell({super.key});
+// --- UI COMPONENTS ---
+
+class CheckoutScreen extends ConsumerWidget {
+  const CheckoutScreen({super.key});
+
+  // Example HTML content for the invoice
+  final String htmlInvoice = """
+    <div style="text-align: center;">
+      <h2 style="color: #2196F3;">KitePay Invoice</h2>
+      <p>Order #772910</p>
+      <hr>
+      <p style="font-size: 18px;">Total Due: <b>\$150.00</b></p>
+    </div>
+  """;
 
   @override
-  ConsumerState<MainLayoutShell> createState() => _MainLayoutShellState();
-}
-
-class _MainLayoutShellState extends ConsumerState<MainLayoutShell> {
-  int _selectedIndex = 0;
-
-  final List<Widget> _screens = [
-    const DashboardScreen(),
-    const PortfolioScreen(),
-    const SwapScreen(),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final wallet = ref.watch(walletProvider);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final paymentState = ref.watch(paymentProvider);
 
     return Scaffold(
-      body: Row(
-        children: [
-          // --- SIDEBAR ---
-          Container(
-            width: 260,
-            decoration: const BoxDecoration(
-              color: Color(0xFF161B22),
-              border: Border(right: BorderSide(color: Colors.white10, width: 1)),
+      appBar: AppBar(title: const Text("KitePay Checkout")),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          children: [
+            // HTML Rendering of the Invoice
+            Card(
+              elevation: 4,
+              child: Html(data: htmlInvoice),
             ),
-            child: Column(
-              children: [
-                const SizedBox(height: 40),
-                const ListTile(
-                  leading: Icon(Icons.tsunami, color: Color(0xFF58A6FF), size: 32),
-                  title: Text('KitePay', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-                ),
-                const SizedBox(height: 20),
-                _navItem(Icons.dashboard_rounded, "Dashboard", 0),
-                _navItem(Icons.account_balance_wallet_rounded, "Portfolio", 1),
-                _navItem(Icons.swap_horizontal_circle_rounded, "Swap", 2),
-                const Spacer(),
-                Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: _buildWalletStatusCard(wallet),
-                ),
-              ],
-            ),
-          ),
+            const Spacer(),
+            
+            // Error Handling
+            if (paymentState.errorMessage != null)
+              Text(paymentState.errorMessage!, style: const TextStyle(color: Colors.red)),
 
-          // --- MAIN CONTENT ---
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(40.0),
-              child: _screens[_selectedIndex],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+            // Success State
+            if (paymentState.isSuccess)
+              const Column(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green, size: 60),
+                  Text("Payment Successful!", style: TextStyle(fontSize: 20)),
+                ],
+              ),
 
-  Widget _navItem(IconData icon, String label, int index) {
-    bool isSelected = _selectedIndex == index;
-    return ListTile(
-      onTap: () => setState(() => _selectedIndex = index),
-      leading: Icon(icon, color: isSelected ? const Color(0xFF58A6FF) : Colors.white54),
-      title: Text(label, style: TextStyle(color: isSelected ? Colors.white : Colors.white54)),
-    );
-  }
+            const SizedBox(height: 20),
 
-  Widget _buildWalletStatusCard(String? wallet) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF21262D),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white10),
-      ),
-      child: Column(
-        children: [
-          Text(wallet == null ? "Not Connected" : "Connected", 
-              style: const TextStyle(color: Colors.white54, fontSize: 12)),
-          const SizedBox(height: 12),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF58A6FF),
-              foregroundColor: Colors.black,
-              minimumSize: const Size(double.infinity, 40),
+            // Action Button
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: paymentState.isLoading || paymentState.isSuccess
+                    ? null
+                    : () => ref.read(paymentProvider.notifier).processPayment(150.0),
+                child: paymentState.isLoading
+                    ? const CircularProgressIndicator()
+                    : const Text("Pay with KitePay"),
+              ),
             ),
-            // ✅ NEW 2026 WAY (Call a method on the Notifier)
-onPressed: () {
-  if (wallet == null) {
-    ref.read(walletProvider.notifier).connect("0xKite...8822");
-  } else {
-    ref.read(walletProvider.notifier).disconnect();
-  }
-            },
-            child: Text(wallet == null ? "Connect" : "Disconnect"),
-          )
-        ],
+            
+            if (paymentState.isSuccess)
+              TextButton(
+                onPressed: () => ref.read(paymentProvider.notifier).reset(),
+                child: const Text("Reset Demo"),
+              )
+          ],
+        ),
       ),
     );
   }
