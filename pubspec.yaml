@@ -6,16 +6,25 @@ version: 1.0.0+1
 environment:
   sdk: ^3.11.5
 
-dependencies: # ONLY ONE OF THESE
+dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
   flutter_riverpod: ^3.3.1
-  flutter_html: ^3.0.0
-  kitepay_sdk: # Ensure this is indented correctly under the first dependencies
-    path: ./kitepay_sdk 
-  flutter_widget_from_html: ^0.17.2
   flutter_dotenv: ^6.0.1
+  
+  # --- TURNKEY & CRYPTO ---
+  turnkey_sdk_flutter: ^1.2.1
+  turnkey_api_key_stamper: ^0.2.1
+  web3dart: ^2.7.3 
+
+  # --- KITE PAY ---
+  kitepay_sdk:
+    path: ./kitepay_sdk 
+
+  # --- UI & UTILS ---
+  flutter_html: ^3.0.0
+  flutter_widget_from_html: ^0.17.2
 
 dev_dependencies:
   flutter_test:
@@ -24,3 +33,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - .env
