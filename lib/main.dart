@@ -1,21 +1,260 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'homescreen.dart'; // Import your UI file
 
-void main() {
-  runApp(const KitePayApp());
+void main() => runApp(const MaterialApp(
+      home: KitePayDashboard(),
+      debugShowCheckedModeBanner: false,
+    ));
+
+class KitePayDashboard extends StatefulWidget {
+  const KitePayDashboard({super.key});
+
+  @override
+  State<KitePayDashboard> createState() => _KitePayDashboardState();
 }
 
-class KitePayApp extends StatelessWidget {
-  const KitePayApp({super.key});
+class _KitePayDashboardState extends State<KitePayDashboard> {
+  // CONNECTION STATE
+  bool isConnected = false;
+  String passportStatus = "Passport: Not Linked";
+  
+  // WALLET ADDRESS
+  final String myWallet = "0xFFeC82F9830f70fD9c978E1264472B08EbB0115c";
+
+  // HELPER TO SHORTEN ADDRESS
+  String shortAddr(String addr) => 
+      "${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}";
+
+  void _togglePassport() {
+    setState(() {
+      isConnected = !isConnected;
+      passportStatus = isConnected ? "Passport: Agent Active" : "Passport: Not Linked";
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(isConnected ? "Kite Agent Connected!" : "Agent Disconnected"),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF0A0A0C),
+    return Scaffold(
+      backgroundColor: const Color(0xFF0F0F0F),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(),
+              const SizedBox(height: 25),
+              _buildGlassCard(),
+              const SizedBox(height: 25),
+              const Text("Quick Actions",
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold)),
+              const SizedBox(height: 15),
+              _buildBentoGrid(),
+              const SizedBox(height: 25),
+              _buildRecentTransactions(),
+            ],
+          ),
+        ),
       ),
-      home: const HomeScreen(), // Tells the app to start here
+      bottomNavigationBar: _buildBottomNav(),
+    );
+  }
+
+  // 1. Header with Passport Status and Shortened Address
+  Widget _buildHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(shortAddr(myWallet), 
+                style: const TextStyle(color: Colors.white54, fontSize: 12, fontFamily: 'monospace')),
+            const Text("Alex Kite",
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: _togglePassport,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isConnected
+                      ? Colors.green.withOpacity(0.1)
+                      : Colors.red.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                      color: isConnected ? Colors.greenAccent : Colors.redAccent),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.shield_rounded,
+                        size: 14,
+                        color: isConnected ? Colors.greenAccent : Colors.redAccent),
+                    const SizedBox(width: 6),
+                    Text(passportStatus,
+                        style: TextStyle(
+                            color: isConnected ? Colors.greenAccent : Colors.redAccent,
+                            fontSize: 11)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const CircleAvatar(
+            radius: 25,
+            backgroundColor: Color(0xFF1E1E1E),
+            child: Icon(Icons.bolt, color: Colors.blueAccent)),
+      ],
+    );
+  }
+
+  // 2. The Glassmorphic Hero Card
+  Widget _buildGlassCard() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: Stack(
+        children: [
+          Container(
+            height: 180,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [
+                Colors.blueAccent.withOpacity(0.3),
+                Colors.purpleAccent.withOpacity(0.1)
+              ]),
+            ),
+          ),
+          BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("TOTAL WEALTH",
+                      style: TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12,
+                          letterSpacing: 1.2)),
+                  const Text("\$24,082.50",
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold)),
+                  Row(
+                    children: [
+                      const Icon(Icons.arrow_upward,
+                          color: Colors.greenAccent, size: 16),
+                      Text(" +2.4% today",
+                          style: TextStyle(
+                              color: Colors.greenAccent.withOpacity(0.8),
+                              fontSize: 14)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 3. Bento Actions
+  Widget _buildBentoGrid() {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      crossAxisSpacing: 15,
+      mainAxisSpacing: 15,
+      childAspectRatio: 1.5,
+      children: [
+        _bentoTile("Send", Icons.send, Colors.blueAccent),
+        _bentoTile("Swap", Icons.swap_horiz, Colors.orangeAccent),
+      ],
+    );
+  }
+
+  Widget _bentoTile(String label, IconData icon, Color color) {
+    return Container(
+      decoration: BoxDecoration(
+          color: const Color(0xFF1E1E1E),
+          borderRadius: BorderRadius.circular(20)),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: color, size: 28),
+          const SizedBox(height: 8),
+          Text(label, style: const TextStyle(color: Colors.white70)),
+        ],
+      ),
+    );
+  }
+
+  // 4. Transaction List
+  Widget _buildRecentTransactions() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("Activity",
+            style: TextStyle(
+                color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 10),
+        _txItem("AI Agent: Gas Fee", "Kite Chain", "- \$0.04", Colors.redAccent),
+        _txItem("Passport Reward", "Staking", "+ \$12.50", Colors.greenAccent),
+      ],
+    );
+  }
+
+  Widget _txItem(String title, String sub, String amt, Color amtColor) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: const CircleAvatar(
+          backgroundColor: Color(0xFF1E1E1E),
+          child: Icon(Icons.history, color: Colors.white54, size: 20)),
+      title: Text(title,
+          style: const TextStyle(color: Colors.white, fontSize: 14)),
+      subtitle: Text(sub,
+          style: const TextStyle(color: Colors.white38, fontSize: 12)),
+      trailing: Text(amt,
+          style: TextStyle(color: amtColor, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      color: Colors.transparent,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: const [
+          Icon(Icons.grid_view_rounded, color: Colors.blueAccent),
+          Icon(Icons.account_balance_wallet_outlined, color: Colors.white38),
+          Icon(Icons.settings_outlined, color: Colors.white38),
+        ],
+      ),
     );
   }
 }
