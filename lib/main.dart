@@ -17,22 +17,24 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
   // CONNECTION STATE
   bool isConnected = false;
   String passportStatus = "Passport: Not Linked";
-  
+
   // WALLET ADDRESS
   final String myWallet = "0xFFeC82F9830f70fD9c978E1264472B08EbB0115c";
 
   // HELPER TO SHORTEN ADDRESS
-  String shortAddr(String addr) => 
+  String shortAddr(String addr) =>
       "${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}";
 
   void _togglePassport() {
     setState(() {
       isConnected = !isConnected;
-      passportStatus = isConnected ? "Passport: Agent Active" : "Passport: Not Linked";
+      passportStatus =
+          isConnected ? "Passport: Agent Active" : "Passport: Not Linked";
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(isConnected ? "Kite Agent Connected!" : "Agent Disconnected"),
+        content:
+            Text(isConnected ? "Kite Agent Connected!" : "Agent Disconnected"),
         duration: const Duration(seconds: 1),
       ),
     );
@@ -51,6 +53,9 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
               _buildHeader(),
               const SizedBox(height: 25),
               _buildGlassCard(),
+              const SizedBox(height: 15),
+              // Integrated Policy Card
+              _buildPolicyCard(),
               const SizedBox(height: 25),
               const Text("Quick Actions",
                   style: TextStyle(
@@ -77,8 +82,11 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(shortAddr(myWallet), 
-                style: const TextStyle(color: Colors.white54, fontSize: 12, fontFamily: 'monospace')),
+            Text(shortAddr(myWallet),
+                style: const TextStyle(
+                    color: Colors.white54,
+                    fontSize: 12,
+                    fontFamily: 'monospace')),
             const Text("Alex Kite",
                 style: TextStyle(
                     color: Colors.white,
@@ -96,18 +104,23 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
                       : Colors.red.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                      color: isConnected ? Colors.greenAccent : Colors.redAccent),
+                      color:
+                          isConnected ? Colors.greenAccent : Colors.redAccent),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.shield_rounded,
                         size: 14,
-                        color: isConnected ? Colors.greenAccent : Colors.redAccent),
+                        color: isConnected
+                            ? Colors.greenAccent
+                            : Colors.redAccent),
                     const SizedBox(width: 6),
                     Text(passportStatus,
                         style: TextStyle(
-                            color: isConnected ? Colors.greenAccent : Colors.redAccent,
+                            color: isConnected
+                                ? Colors.greenAccent
+                                : Colors.redAccent,
                             fontSize: 11)),
                   ],
                 ),
@@ -181,7 +194,35 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
     );
   }
 
-  // 3. Bento Actions
+  // 3. The Session Policy Card
+  Widget _buildPolicyCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.blueAccent.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.blueAccent.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.timer_outlined, color: Colors.blueAccent, size: 18),
+          const SizedBox(width: 8),
+          const Text("1h Session",
+              style: TextStyle(color: Colors.white70, fontSize: 13)),
+          const Spacer(),
+          Container(height: 20, width: 1, color: Colors.white10),
+          const Spacer(),
+          const Icon(Icons.account_balance_wallet_outlined,
+              color: Colors.greenAccent, size: 18),
+          const SizedBox(width: 8),
+          const Text("\$1.50 Limit",
+              style: TextStyle(color: Colors.white70, fontSize: 13)),
+        ],
+      ),
+    );
+  }
+
+  // 4. Bento Actions
   Widget _buildBentoGrid() {
     return GridView.count(
       shrinkWrap: true,
@@ -213,7 +254,7 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
     );
   }
 
-  // 4. Transaction List
+  // 5. Transaction List
   Widget _buildRecentTransactions() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
