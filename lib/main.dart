@@ -12,7 +12,10 @@ class KitePayApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF0A0A0A),
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent, brightness: Brightness.dark),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blueAccent, 
+          brightness: Brightness.dark,
+        ),
       ),
       home: const KitePayDashboard(),
     );
@@ -26,8 +29,8 @@ class KitePayDashboard extends StatefulWidget {
   State<KitePayDashboard> createState() => _KitePayDashboardState();
 }
 
-class _KitePayDashboardState extends State<KitePayDashboard> {
-  // CONNECTION & IDENTITY STATE
+class _ KitePayDashboardState extends State<KitePayDashboard> {
+  // --- STATE MANAGEMENT ---
   bool isConnected = false;
   bool isSyncing = false;
   String sessionLimit = "0.00 USDC";
@@ -38,10 +41,9 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
   String shortAddr(String addr) =>
       "${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}";
 
-  // Action 1: Syncing with CLI/Passport
+  // --- ACTIONS ---
   void _refreshAgentStatus() async {
     setState(() => isSyncing = true);
-    // Simulating kpass user sessions --status active
     await Future.delayed(const Duration(seconds: 1));
     setState(() {
       isSyncing = false;
@@ -51,14 +53,12 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
     _showSnackBar("Passport Synced: Agent Active", Colors.blueAccent);
   }
 
-  // Action 2: Executing an Agent Skill
   Future<void> _executeTransaction() async {
     if (!isConnected) {
       _showSnackBar("Please sync Passport first", Colors.orangeAccent);
       return;
     }
     setState(() => isSyncing = true);
-    // Simulating: kpass agent execute wallet-send --to 0x...
     await Future.delayed(const Duration(seconds: 2));
     setState(() => isSyncing = false);
     _showSnackBar("Agent successfully executed transfer!", Colors.green);
@@ -66,7 +66,12 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
 
   void _showSnackBar(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: color, duration: const Duration(seconds: 2)),
+      SnackBar(
+        content: Text(message), 
+        backgroundColor: color, 
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2)
+      ),
     );
   }
 
@@ -85,7 +90,8 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
               const SizedBox(height: 24),
               _buildAgentStatusTile(),
               const SizedBox(height: 32),
-              const Text("Quick Actions", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text("Quick Actions", 
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               _buildBentoGrid(),
               const SizedBox(height: 32),
@@ -100,6 +106,8 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
     );
   }
 
+  // --- UI COMPONENTS ---
+
   Widget _buildHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -107,9 +115,12 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("KitePay 2026", style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold, fontSize: 12)),
-            const Text("Dashboard", style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
-            Text(shortAddr(walletAddr), style: const TextStyle(color: Colors.white38, fontFamily: 'monospace', fontSize: 12)),
+            const Text("KitePay 2026", 
+              style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold, fontSize: 12)),
+            const Text("Dashboard", 
+              style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+            Text(shortAddr(walletAddr), 
+              style: const TextStyle(color: Colors.white38, fontFamily: 'monospace', fontSize: 12)),
           ],
         ),
         _buildAgentBadge(),
@@ -130,7 +141,11 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
           Icon(Icons.bolt, color: isConnected ? Colors.greenAccent : Colors.white24, size: 16),
           const SizedBox(width: 8),
           Text(isSyncing ? "SYNCING..." : (isConnected ? "ACTIVE" : "OFFLINE"),
-              style: TextStyle(color: isConnected ? Colors.greenAccent : Colors.white38, fontSize: 10, fontWeight: FontWeight.bold)),
+              style: TextStyle(
+                color: isConnected ? Colors.greenAccent : Colors.white38, 
+                fontSize: 10, 
+                fontWeight: FontWeight.bold
+              )),
         ],
       ),
     );
@@ -145,7 +160,11 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
             height: 180,
             width: double.infinity,
             decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [Colors.blueAccent.withOpacity(0.2), Colors.purpleAccent.withOpacity(0.1)]),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Colors.blueAccent.withOpacity(0.2), Colors.purpleAccent.withOpacity(0.1)]
+              ),
             ),
           ),
           BackdropFilter(
@@ -161,9 +180,11 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text("TOTAL WEALTH", style: TextStyle(color: Colors.white54, fontSize: 10, letterSpacing: 1.5)),
+                  const Text("TOTAL WEALTH", 
+                    style: TextStyle(color: Colors.white54, fontSize: 10, letterSpacing: 1.5)),
                   const SizedBox(height: 8),
-                  const Text("\$24,082.50", style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold)),
+                  const Text("\$24,082.50", 
+                    style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
                   Row(
                     children: [
@@ -207,12 +228,15 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(isConnected ? "Agent Authorized" : "Agent Restricted", style: const TextStyle(fontWeight: FontWeight.bold)),
-              Text("Session Limit: $sessionLimit", style: const TextStyle(color: Colors.white38, fontSize: 12)),
+              Text(isConnected ? "Agent Authorized" : "Agent Restricted", 
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text("Session Limit: $sessionLimit", 
+                style: const TextStyle(color: Colors.white38, fontSize: 12)),
             ],
           ),
           const Spacer(),
-          if (isSyncing) const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+          if (isSyncing) const SizedBox(width: 16, height: 16, 
+            child: CircularProgressIndicator(strokeWidth: 2)),
         ],
       ),
     );
@@ -237,7 +261,11 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(20)),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A1A), 
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withOpacity(0.03))
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -254,7 +282,8 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("RECENT ACTIVITY", style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 1)),
+        const Text("RECENT ACTIVITY", 
+          style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 1)),
         const SizedBox(height: 16),
         if (isSyncing) _activityRow("Agent Executing...", "Skill: wallet-send", "Processing", Colors.orangeAccent),
         _activityRow("Agent Registered", agentId, "Success", Colors.blueAccent),
@@ -294,6 +323,7 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 20),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          elevation: 0,
         ),
         child: Text(isConnected ? "Refresh Session" : "Sync with Kite Passport", 
              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
@@ -304,7 +334,6 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
   Widget _buildBottomNav() {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20),
-      color: Colors.transparent,
       child: const Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [

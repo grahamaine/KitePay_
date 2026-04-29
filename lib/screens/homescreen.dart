@@ -1,381 +1,361 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
+import 'dart:ui';
 
-void main() => runApp(const KitePayApp());
-
-class KitePayApp extends StatelessWidget {
-  const KitePayApp({super.key});
+class KitePayHomeScreen extends StatefulWidget {
+  const KitePayHomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'KitePay dApp',
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF0A0A0C),
-      ),
-      home: const KitePayDashboard(),
-    );
-  }
+  State<KitePayHomeScreen> createState() => _KitePayHomeScreenState();
 }
 
-class KitePayDashboard extends StatefulWidget {
-  const KitePayDashboard({super.key});
-
-  @override
-  State<KitePayDashboard> createState() => _KitePayDashboardState();
-}
-
-class _KitePayDashboardState extends State<KitePayDashboard> {
-  // --- Agent & Identity State (Merged from snippet 1) ---
+class _KitePayHomeScreenState extends State<KitePayHomeScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _glowController;
   final String agentId = "agent_019dd9ae";
   final String walletAddr = "0xFFeC82F9830f70fD9c978E1264472B08EbB0115c";
   
-  bool _isSyncing = false;
-  bool _agentActive = false;
-  String _sessionLimit = "0.00 USDC";
+  bool isConnected = false;
+  bool isSyncing = false;
+  double balance = 120.50;
 
-  // --- Theme Colors (Merged from snippet 2) ---
-  static const Color bgColor = Color(0xFF0A0A0C);
-  static const Color surfaceColor = Color(0xFF111115);
-  static const Color accentColor = Color(0xFF6C5CE7); // Kite Purple
-  static const Color accent2Color = Color(0xFFA29BFE); // Light Lavender
-  static const Color mutedColor = Color(0xFF6B6A7A);
+  @override
+  void initState() {
+    super.initState();
+    _glowController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+  }
 
-  String _shortAddr(String addr) =>
-      "${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}";
+  @override
+  void dispose() {
+    _glowController.dispose();
+    super.dispose();
+  }
 
-  Future<void> _syncWithKitePassport() async {
-    setState(() => _isSyncing = true);
-    
-    // Simulating: kpass user sessions --status active (from CLI 2026 logic)
+  void _handleSync() async {
+    setState(() => isSyncing = true);
     await Future.delayed(const Duration(seconds: 2));
-    
     setState(() {
-      _isSyncing = false;
-      _agentActive = true;
-      _sessionLimit = "2.00 USDC"; 
+      isSyncing = false;
+      isConnected = true;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bgColor,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.only(bottom: 110),
+      backgroundColor: const Color(0xFF050505),
+      body: Stack(
+        children: [
+          // Background Ambient Glow
+          Positioned(
+            top: -100,
+            right: -50,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.blueAccent.withValues(alpha: 0.15),
+              ),
+              child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100), child: Container()),
+            ),
+          ),
+          
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildHeader(),
-                  _buildHeroPortfolio(),
-                  const SizedBox(height: 24),
-                  _buildAgentDeploymentSection(),
-                  const SizedBox(height: 24),
-                  _buildMainAssetCard(),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 40),
+                  _buildMainCard(),
+                  const SizedBox(height: 30),
                   _buildQuickActions(),
-                  const SizedBox(height: 32),
-                  _buildActivityFeed(),
+                  const SizedBox(height: 40),
+                  _buildAgentSection(),
+                  const SizedBox(height: 40),
+                  _buildTransactionHistory(),
+                  const SizedBox(height: 100), // Space for floating button
                 ],
               ),
             ),
-            _buildBottomNavbar(),
-          ],
-        ),
+          ),
+          
+          _buildFloatingActionButton(),
+        ],
       ),
     );
   }
 
-  // Header incorporating the branding from snippet 1 & style of snippet 2
   Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 46, height: 46,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  gradient: const LinearGradient(colors: [accentColor, accent2Color]),
-                ),
-                child: const Center(
-                  child: Text("AK", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white))
-                ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("DASHBOARD", 
-                    style: TextStyle(color: mutedColor, fontSize: 10, letterSpacing: 1.5, fontWeight: FontWeight.bold)),
-                  Text(_shortAddr(walletAddr), 
-                    style: const TextStyle(color: Colors.white, fontSize: 14, fontFamily: 'monospace')),
-                ],
-              )
-            ],
+    return Row(
+      children: [
+        CircleAvatar(
+          radius: 24,
+          backgroundColor: Colors.white10,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Image.asset('assets/KitePay_Dapp.png', errorBuilder: (c, e, s) => const Icon(Icons.account_balance_wallet, color: Colors.blueAccent)),
           ),
-          // Branded Logo with status indicator
-          Container(
-            width: 50, height: 50,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: _agentActive ? Colors.greenAccent.withOpacity(0.5) : Colors.white10,
-                width: 2
-              ),
-              image: const DecorationImage(
-                image: AssetImage('assets/KitePay_Dapp.png'),
-                fit: BoxFit.cover,
-              ),
+        ),
+        const SizedBox(width: 16),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("Welcome back,", style: TextStyle(color: Colors.white38, fontSize: 14)),
+            Text(
+              "Kite User ${walletAddr.substring(2, 6)}",
+              style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
             ),
+          ],
+        ),
+        const Spacer(),
+        _statusBadge(),
+      ],
+    );
+  }
+
+  Widget _statusBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: isConnected ? Colors.greenAccent.withValues(alpha: 0.1) : Colors.redAccent.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: isConnected ? Colors.greenAccent.withValues(alpha: 0.3) : Colors.redAccent.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isConnected ? Colors.greenAccent : Colors.redAccent,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            isConnected ? "LIVE" : "OFFLINE",
+            style: TextStyle(color: isConnected ? Colors.greenAccent : Colors.redAccent, fontSize: 10, fontWeight: FontWeight.bold),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildHeroPortfolio() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildMainCard() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1A1A1A), Color(0xFF0D0D0D)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blueAccent.withValues(alpha: 0.05),
+            blurRadius: 40,
+            offset: const Offset(0, 20),
+          )
+        ],
+      ),
+      padding: const EdgeInsets.all(28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          const Text("NET WORTH", style: TextStyle(color: Colors.white38, letterSpacing: 2, fontSize: 11, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 12),
+          Text("\$${balance.toStringAsFixed(2)}", style: const TextStyle(color: Colors.white, fontSize: 42, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 24),
+          Row(
             children: [
-              const Text("PORTFOLIO VALUE", style: TextStyle(color: mutedColor, fontSize: 11)),
-              const SizedBox(height: 8),
-              RichText(
-                text: const TextSpan(
+              _cryptoPill("USDC", "100.00", Colors.blue),
+              const SizedBox(width: 12),
+              _cryptoPill("KITE", "450.25", Colors.cyanAccent),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _cryptoPill(String symbol, String amount, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: Row(
+        children: [
+          Text(symbol, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
+          const SizedBox(width: 8),
+          Text(amount, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAgentSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("KITE AI AGENT", style: TextStyle(color: Colors.white38, letterSpacing: 1.5, fontSize: 11)),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.02),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white10),
+          ),
+          child: Row(
+            children: [
+              AnimatedBuilder(
+                animation: _glowController,
+                builder: (context, child) {
+                  return Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: isConnected ? [
+                        BoxShadow(
+                          color: Colors.blueAccent.withValues(alpha: 0.3 * _glowController.value),
+                          blurRadius: 15,
+                          spreadRadius: 2,
+                        )
+                      ] : [],
+                      color: isConnected ? Colors.blueAccent : Colors.white10,
+                    ),
+                    child: Icon(Icons.psychology, color: isConnected ? Colors.white : Colors.white24),
+                  );
+                },
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TextSpan(text: "\$", style: TextStyle(color: accent2Color, fontSize: 24)),
-                    TextSpan(text: "12,450", style: TextStyle(color: Colors.white, fontSize: 44, fontWeight: FontWeight.bold)),
-                    TextSpan(text: ".82", style: TextStyle(color: mutedColor, fontSize: 24)),
+                    Text(isConnected ? "Agent Active" : "No Active Session", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    Text(isConnected ? "Auth: $agentId" : "Connect Passport to enable AI payments", style: const TextStyle(color: Colors.white38, fontSize: 12)),
                   ],
                 ),
               ),
             ],
           ),
-          _buildDonutChart(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAgentDeploymentSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: _agentActive
-          ? Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.green.withOpacity(0.2)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.verified_user, color: Colors.green, size: 20),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text("Agent Authorized", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                      Text("Session Limit: $_sessionLimit", style: const TextStyle(color: Colors.white38, fontSize: 11)),
-                    ],
-                  ),
-                  const Spacer(),
-                  const Icon(Icons.shield_outlined, color: Colors.green, size: 18),
-                ],
-              ),
-            )
-          : ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: accentColor,
-                minimumSize: const Size(double.infinity, 60),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                elevation: 0,
-              ),
-              onPressed: _isSyncing ? null : _syncWithKitePassport,
-              child: _isSyncing
-                  ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : const Text("SYNC WITH KITE PASSPORT", 
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
-            ),
-    );
-  }
-
-  Widget _buildMainAssetCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1A1A2E), Color(0xFF0F3460)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
         ),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-      ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("PRIMARY WALLET", style: TextStyle(color: Colors.white54, fontSize: 10, letterSpacing: 1.5)),
-          SizedBox(height: 20),
-          Text("0.1482 BTC", style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, fontFamily: 'monospace')),
-          Text("≈ \$9,841.20 USD", style: TextStyle(color: Colors.white70, fontSize: 14)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickActions() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _actionItem("Send", Icons.north_east, Colors.blueAccent),
-          _actionItem("Receive", Icons.south_west, Colors.greenAccent),
-          _actionItem("Swap", Icons.swap_horiz, Colors.orangeAccent),
-          _actionItem("Vault", Icons.lock_outline, accent2Color),
-        ],
-      ),
-    );
-  }
-
-  Widget _actionItem(String label, IconData icon, Color color) {
-    return Column(
-      children: [
-        Container(
-          width: 64, height: 64,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1), 
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: color.withOpacity(0.05))
-          ),
-          child: Icon(icon, color: color, size: 28),
-        ),
-        const SizedBox(height: 10),
-        Text(label, style: const TextStyle(color: mutedColor, fontSize: 12, fontWeight: FontWeight.w500)),
       ],
     );
   }
 
-  Widget _buildActivityFeed() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("RECENT ACTIVITY", style: TextStyle(color: mutedColor, fontSize: 10, letterSpacing: 1.5, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 20),
-          _activityRow("Agent Registered", agentId.substring(0, 18) + "...", "Success", Icons.auto_awesome),
-          _activityRow("Wallet Linked", "Kite Chain Mainnet", "Verified", Icons.link),
-        ],
-      ),
+  Widget _buildQuickActions() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _actionItem(Icons.north_east, "Send"),
+        _actionItem(Icons.south_west, "Receive"),
+        _actionItem(Icons.swap_horizontal_circle_outlined, "Swap"),
+        _actionItem(Icons.more_horiz, "More"),
+      ],
     );
   }
 
-  Widget _activityRow(String title, String sub, String status, IconData icon) {
+  Widget _actionItem(IconData icon, String label) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.05),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: Colors.white, size: 20),
+        ),
+        const SizedBox(height: 8),
+        Text(label, style: const TextStyle(color: Colors.white38, fontSize: 12)),
+      ],
+    );
+  }
+
+  Widget _buildTransactionHistory() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text("RECENT ACTIVITY", style: TextStyle(color: Colors.white38, letterSpacing: 1.5, fontSize: 11)),
+            TextButton(onPressed: () {}, child: const Text("See All", style: TextStyle(color: Colors.blueAccent, fontSize: 12))),
+          ],
+        ),
+        _txItem("Smart Swap", "KITE to USDC", "+\$24.00", Colors.greenAccent),
+        _txItem("Agent Fee", "Session Start", "-\$0.02", Colors.white38),
+        _txItem("Receive", "From 0x42...f2", "+\$10.00", Colors.greenAccent),
+      ],
+    );
+  }
+
+  Widget _txItem(String title, String sub, String amount, Color amountColor) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: surfaceColor, borderRadius: BorderRadius.circular(12)),
-            child: Icon(icon, color: accent2Color, size: 20),
+            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.03), borderRadius: BorderRadius.circular(12)),
+            child: const Icon(Icons.history, color: Colors.white24, size: 18),
           ),
           const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
-              Text(sub, style: const TextStyle(color: mutedColor, fontSize: 12)),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                Text(sub, style: const TextStyle(color: Colors.white38, fontSize: 12)),
+              ],
+            ),
           ),
-          const Spacer(),
-          Text(status, style: const TextStyle(color: Colors.white38, fontSize: 12)),
+          Text(amount, style: TextStyle(color: amountColor, fontWeight: FontWeight.bold, fontSize: 14)),
         ],
       ),
     );
   }
 
-  Widget _buildDonutChart() {
-    return SizedBox(
-      width: 75, height: 75,
-      child: CustomPaint(
-        painter: DonutPainter(segment1: 0.7, segment2: 0.2),
-        child: const Center(
-          child: Text("3", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+  Widget _buildFloatingActionButton() {
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Container(
+          width: double.infinity,
+          height: 64,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: const LinearGradient(colors: [Colors.blueAccent, Color(0xFF64B5F6)]),
+            boxShadow: [BoxShadow(color: Colors.blueAccent.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8))],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _handleSync,
+              borderRadius: BorderRadius.circular(20),
+              child: Center(
+                child: isSyncing 
+                  ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : const Text("SYNC WITH KITE PASSPORT", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
-
-  Widget _buildBottomNavbar() {
-    return Positioned(
-      bottom: 0, left: 0, right: 0,
-      child: Container(
-        height: 95,
-        padding: const EdgeInsets.only(bottom: 10),
-        decoration: BoxDecoration(
-          color: surfaceColor.withOpacity(0.98),
-          border: const Border(top: BorderSide(color: Colors.white10)),
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            Icon(Icons.grid_view_rounded, color: accent2Color, size: 28),
-            Icon(Icons.analytics_outlined, color: mutedColor, size: 28),
-            Icon(Icons.center_focus_weak, color: mutedColor, size: 28),
-            Icon(Icons.settings_input_component_outlined, color: mutedColor, size: 28),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class DonutPainter extends CustomPainter {
-  final double segment1;
-  final double segment2;
-
-  DonutPainter({required this.segment1, required this.segment2});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 9
-      ..strokeCap = StrokeCap.round;
-
-    // Background track
-    paint.color = const Color(0xFF1F1F28);
-    canvas.drawCircle(center, radius - 5, paint);
-
-    // Segment 1 (Kite Purple)
-    paint.color = const Color(0xFF6C5CE7);
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius - 5), -math.pi / 2, 2 * math.pi * segment1, false, paint);
-
-    // Segment 2 (Lavender)
-    paint.color = const Color(0xFFA29BFE);
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius - 5), 
-        (-math.pi / 2) + (2 * math.pi * segment1), 2 * math.pi * segment2, false, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
