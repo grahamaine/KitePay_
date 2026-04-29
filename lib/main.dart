@@ -1,10 +1,23 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-void main() => runApp(const MaterialApp(
-      home: KitePayDashboard(),
+void main() => runApp(const KitePayApp());
+
+class KitePayApp extends StatelessWidget {
+  const KitePayApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-    ));
+      theme: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: const Color(0xFF0A0A0A),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent, brightness: Brightness.dark),
+      ),
+      home: const KitePayDashboard(),
+    );
+  }
+}
 
 class KitePayDashboard extends StatefulWidget {
   const KitePayDashboard({super.key});
@@ -16,82 +29,69 @@ class KitePayDashboard extends StatefulWidget {
 class _KitePayDashboardState extends State<KitePayDashboard> {
   // CONNECTION & IDENTITY STATE
   bool isConnected = false;
-  bool isSyncing = false; // New: Tracks agent execution
-  String passportStatus = "Passport: Not Linked";
-  final String myAgentId = "agent_019dd9ae";
-  final String myWallet = "0xFFeC82F9830f70fD9c978E1264472B08EbB0115c";
+  bool isSyncing = false;
+  String sessionLimit = "0.00 USDC";
+  
+  final String agentId = "agent_019dd9ae";
+  final String walletAddr = "0xFFeC82F9830f70fD9c978E1264472B08EbB0115c";
 
-  // HELPER TO SHORTEN ADDRESS
   String shortAddr(String addr) =>
       "${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}";
 
-  void _togglePassport() {
-    setState(() {
-      isConnected = !isConnected;
-      passportStatus =
-          isConnected ? "Passport: Agent Active" : "Passport: Not Linked";
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content:
-            Text(isConnected ? "Kite Agent Connected!" : "Agent Disconnected"),
-        duration: const Duration(seconds: 1),
-        backgroundColor: isConnected ? Colors.blueAccent : Colors.redAccent,
-      ),
-    );
-  }
-
-  // 2026 Skill Execution Logic
-  Future<void> _executeTransaction() async {
-    if (!isConnected) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please connect Passport first")),
-      );
-      return;
-    }
-
+  // Action 1: Syncing with CLI/Passport
+  void _refreshAgentStatus() async {
     setState(() => isSyncing = true);
-
-    // Simulation of the kpass execution command: 
-    // kpass agent execute wallet-send --to 0x... --amount 0.1
-    await Future.delayed(const Duration(seconds: 2));
-
+    // Simulating kpass user sessions --status active
+    await Future.delayed(const Duration(seconds: 1));
     setState(() {
       isSyncing = false;
+      isConnected = true;
+      sessionLimit = "1.50 USDC";
     });
+    _showSnackBar("Passport Synced: Agent Active", Colors.blueAccent);
+  }
 
+  // Action 2: Executing an Agent Skill
+  Future<void> _executeTransaction() async {
+    if (!isConnected) {
+      _showSnackBar("Please sync Passport first", Colors.orangeAccent);
+      return;
+    }
+    setState(() => isSyncing = true);
+    // Simulating: kpass agent execute wallet-send --to 0x...
+    await Future.delayed(const Duration(seconds: 2));
+    setState(() => isSyncing = false);
+    _showSnackBar("Agent successfully executed transfer!", Colors.green);
+  }
+
+  void _showSnackBar(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-          content: Text("Agent successfully executed transfer!"),
-          backgroundColor: Colors.green),
+      SnackBar(content: Text(message), backgroundColor: color, duration: const Duration(seconds: 2)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F0F),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(),
-              const SizedBox(height: 25),
-              _buildGlassCard(),
-              const SizedBox(height: 15),
-              _buildPolicyCard(),
-              const SizedBox(height: 25),
-              const Text("Quick Actions",
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold)),
-              const SizedBox(height: 15),
+              const SizedBox(height: 32),
+              _buildGlassBalanceCard(),
+              const SizedBox(height: 24),
+              _buildAgentStatusTile(),
+              const SizedBox(height: 32),
+              const Text("Quick Actions", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
               _buildBentoGrid(),
-              const SizedBox(height: 25),
-              _buildRecentTransactions(),
+              const SizedBox(height: 32),
+              _buildActivityFeed(),
+              const SizedBox(height: 24),
+              _buildSyncButton(),
             ],
           ),
         ),
@@ -101,120 +101,51 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
   }
 
   Widget _buildHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildAgentIdentity(),
-            CircleAvatar(
-                radius: 20,
-                backgroundColor: const Color(0xFF1E1E1E),
-                child: isSyncing 
-                  ? const SizedBox(width: 15, height: 15, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.blueAccent))
-                  : const Icon(Icons.bolt, color: Colors.blueAccent, size: 20)),
+            const Text("KitePay 2026", style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold, fontSize: 12)),
+            const Text("Dashboard", style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+            Text(shortAddr(walletAddr), style: const TextStyle(color: Colors.white38, fontFamily: 'monospace', fontSize: 12)),
           ],
         ),
-        const SizedBox(height: 15),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(shortAddr(myWallet),
-                    style: const TextStyle(
-                        color: Colors.white54,
-                        fontSize: 12,
-                        fontFamily: 'monospace')),
-                const Text("Alex Kite",
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: _togglePassport,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: isConnected
-                          ? Colors.green.withOpacity(0.1)
-                          : Colors.red.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                          color: isConnected ? Colors.greenAccent : Colors.redAccent),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.shield_rounded,
-                            size: 14,
-                            color: isConnected ? Colors.greenAccent : Colors.redAccent),
-                        const SizedBox(width: 6),
-                        Text(passportStatus,
-                            style: TextStyle(
-                                color: isConnected ? Colors.greenAccent : Colors.redAccent,
-                                fontSize: 11)),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+        _buildAgentBadge(),
       ],
     );
   }
 
-  Widget _buildAgentIdentity() {
+  Widget _buildAgentBadge() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: isConnected
-                ? Colors.greenAccent.withOpacity(0.3)
-                : Colors.white10),
+        border: Border.all(color: isConnected ? Colors.greenAccent.withOpacity(0.3) : Colors.white10),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.bolt,
-              color: isConnected ? Colors.greenAccent : Colors.white38,
-              size: 16),
+          Icon(Icons.bolt, color: isConnected ? Colors.greenAccent : Colors.white24, size: 16),
           const SizedBox(width: 8),
-          Text(
-            isSyncing ? "EXECUTING SKILL..." : (isConnected ? "ACTIVE SESSION" : "OFFLINE"),
-            style: TextStyle(
-              color: isConnected ? Colors.greenAccent : Colors.white38,
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1,
-            ),
-          ),
+          Text(isSyncing ? "SYNCING..." : (isConnected ? "ACTIVE" : "OFFLINE"),
+              style: TextStyle(color: isConnected ? Colors.greenAccent : Colors.white38, fontSize: 10, fontWeight: FontWeight.bold)),
         ],
       ),
     );
   }
 
-  Widget _buildGlassCard() {
+  Widget _buildGlassBalanceCard() {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(28),
       child: Stack(
         children: [
           Container(
             height: 180,
             width: double.infinity,
             decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [
-                Colors.blueAccent.withOpacity(0.3),
-                Colors.purpleAccent.withOpacity(0.1)
-              ]),
+              gradient: LinearGradient(colors: [Colors.blueAccent.withOpacity(0.2), Colors.purpleAccent.withOpacity(0.1)]),
             ),
           ),
           BackdropFilter(
@@ -224,23 +155,26 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.05),
                 border: Border.all(color: Colors.white.withOpacity(0.1)),
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(28),
               ),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text("TOTAL WEALTH",
-                      style: TextStyle(color: Colors.white54, fontSize: 12, letterSpacing: 1.2)),
-                  const Text("\$24,082.50",
-                      style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold)),
+                  const Text("TOTAL WEALTH", style: TextStyle(color: Colors.white54, fontSize: 10, letterSpacing: 1.5)),
+                  const SizedBox(height: 8),
+                  const Text("\$24,082.50", style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
                   Row(
                     children: [
-                      const Icon(Icons.arrow_upward, color: Colors.greenAccent, size: 16),
-                      Text(" +2.4% today",
-                          style: TextStyle(color: Colors.greenAccent.withOpacity(0.8), fontSize: 14)),
+                      _tokenBadge("USDC", Colors.blue),
+                      const SizedBox(width: 8),
+                      _tokenBadge("KITE", Colors.orange),
+                      const Spacer(),
+                      const Icon(Icons.arrow_upward, color: Colors.greenAccent, size: 14),
+                      const Text(" 2.4%", style: TextStyle(color: Colors.greenAccent, fontSize: 12)),
                     ],
-                  ),
+                  )
                 ],
               ),
             ),
@@ -250,25 +184,35 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
     );
   }
 
-  Widget _buildPolicyCard() {
+  Widget _tokenBadge(String name, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
+      child: Text(name, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget _buildAgentStatusTile() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.blueAccent.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blueAccent.withOpacity(0.2)),
+        color: const Color(0xFF161616),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: isConnected ? Colors.greenAccent.withOpacity(0.2) : Colors.white10),
       ),
       child: Row(
         children: [
-          const Icon(Icons.timer_outlined, color: Colors.blueAccent, size: 18),
-          const SizedBox(width: 8),
-          const Text("1h Session", style: TextStyle(color: Colors.white70, fontSize: 13)),
+          Icon(Icons.shield_outlined, color: isConnected ? Colors.greenAccent : Colors.white24),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(isConnected ? "Agent Authorized" : "Agent Restricted", style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text("Session Limit: $sessionLimit", style: const TextStyle(color: Colors.white38, fontSize: 12)),
+            ],
+          ),
           const Spacer(),
-          Container(height: 20, width: 1, color: Colors.white10),
-          const Spacer(),
-          const Icon(Icons.account_balance_wallet_outlined, color: Colors.greenAccent, size: 18),
-          const SizedBox(width: 8),
-          const Text("\$1.50 Limit", style: TextStyle(color: Colors.white70, fontSize: 13)),
+          if (isSyncing) const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
         ],
       ),
     );
@@ -283,55 +227,77 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
       mainAxisSpacing: 15,
       childAspectRatio: 1.5,
       children: [
-        GestureDetector(
-          onTap: _executeTransaction,
-          child: _bentoTile("Send", Icons.send, Colors.blueAccent)
-        ),
-        _bentoTile("Swap", Icons.swap_horiz, Colors.orangeAccent),
+        _bentoTile("Send", Icons.send, Colors.blueAccent, onTap: _executeTransaction),
+        _bentoTile("Swap", Icons.swap_horiz, Colors.orangeAccent, onTap: () {}),
       ],
     );
   }
 
-  Widget _bentoTile(String label, IconData icon, Color color) {
-    return Container(
-      decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E),
-          borderRadius: BorderRadius.circular(20)),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+  Widget _bentoTile(String label, IconData icon, Color color, {required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(20)),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 8),
+            Text(label, style: const TextStyle(color: Colors.white70, fontSize: 14)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivityFeed() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("RECENT ACTIVITY", style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 1)),
+        const SizedBox(height: 16),
+        if (isSyncing) _activityRow("Agent Executing...", "Skill: wallet-send", "Processing", Colors.orangeAccent),
+        _activityRow("Agent Registered", agentId, "Success", Colors.blueAccent),
+        _activityRow("Wallet Linked", "Kite Chain", "Verified", Colors.blueAccent),
+      ],
+    );
+  }
+
+  Widget _activityRow(String title, String sub, String status, Color dotColor) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
         children: [
-          Icon(icon, color: color, size: 28),
-          const SizedBox(height: 8),
-          Text(label, style: const TextStyle(color: Colors.white70)),
+          Icon(Icons.check_circle_outline, color: dotColor, size: 18),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              Text(sub, style: const TextStyle(color: Colors.white24, fontSize: 11)),
+            ],
+          ),
+          const Spacer(),
+          Text(status, style: const TextStyle(color: Colors.white38, fontSize: 12)),
         ],
       ),
     );
   }
 
-  Widget _buildRecentTransactions() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("Activity",
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 10),
-        if (isSyncing)
-          _txItem("Executing: Send Skill", "Processing...", "WAITING", Colors.orangeAccent),
-        _txItem("AI Agent: Gas Fee", "Kite Chain", "- \$0.04", Colors.redAccent),
-        _txItem("Passport Reward", "Staking", "+ \$12.50", Colors.greenAccent),
-      ],
-    );
-  }
-
-  Widget _txItem(String title, String sub, String amt, Color amtColor) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: const CircleAvatar(
-          backgroundColor: Color(0xFF1E1E1E),
-          child: Icon(Icons.history, color: Colors.white54, size: 20)),
-      title: Text(title, style: const TextStyle(color: Colors.white, fontSize: 14)),
-      subtitle: Text(sub, style: const TextStyle(color: Colors.white38, fontSize: 12)),
-      trailing: Text(amt, style: TextStyle(color: amtColor, fontWeight: FontWeight.bold)),
+  Widget _buildSyncButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: isSyncing ? null : _refreshAgentStatus,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.blueAccent,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        ),
+        child: Text(isConnected ? "Refresh Session" : "Sync with Kite Passport", 
+             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+      ),
     );
   }
 
@@ -339,9 +305,9 @@ class _KitePayDashboardState extends State<KitePayDashboard> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20),
       color: Colors.transparent,
-      child: Row(
+      child: const Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: const [
+        children: [
           Icon(Icons.grid_view_rounded, color: Colors.blueAccent),
           Icon(Icons.account_balance_wallet_outlined, color: Colors.white38),
           Icon(Icons.settings_outlined, color: Colors.white38),
