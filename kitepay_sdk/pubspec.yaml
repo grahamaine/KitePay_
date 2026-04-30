@@ -1,8 +1,8 @@
-﻿name: kitepay_sdk
-description: Local KitePay logic
-version: 0.0.1
+name: kitepay_sdk
+description: A local Dart wrapper for KitePay API.
+version: 1.0.0
 environment:
   sdk: '>=3.0.0 <4.0.0'
+
 dependencies:
-  flutter:
-    sdk: flutter
+  http: ^1.2.1

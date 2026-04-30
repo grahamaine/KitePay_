@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:kitepay_sdk/kitepay_sdk.dart';
 
 // --- KITE PAY INITIALIZATION ---
-// Initialize with your actual API key.
-// Note: We've removed publicKey and environment to match our SDK class.
 final kitepay = Kitepay(
-  apiKey: 'pk_live_your_key_here',
+  apiKey: 'sk_test_your_key_here', // Use your Secret Key from the dashboard
+  environment: KitepayEnvironment.sandbox, // Toggle this for Live/Sandbox
 );
+
+// Delete the line mentioning 'environment: KitepayEnvironment.sandbox'
+// as it is currently undefined in your SDK.
 
 void main() => runApp(const KitePayApp());
 

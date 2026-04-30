@@ -3,10 +3,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:kitepay_sdk/kitepay_sdk.dart'; // Ensure this is in pubspec.yaml
 
-// 1. Fixed the initialization
+// --- KITE PAY INITIALIZATION ---
 final kitepay = Kitepay(
-  publicKey: 'your_public_key_here',
-  environment: KitepayEnvironment.sandbox,
+  apiKey: 'sk_test_your_key_here', // Use your Secret Key from the dashboard
+  environment: KitepayEnvironment.sandbox, // Toggle this for Live/Sandbox
 );
 
 class KitePayHomeScreen extends StatefulWidget {
@@ -150,9 +150,8 @@ class _KitePayHomeScreenState extends State<KitePayHomeScreen>
   }
 
   Widget _statusBadge() {
-    final Color badgeColor = isConnected
-        ? Colors.greenAccent
-        : Colors.redAccent;
+    final Color badgeColor =
+        isConnected ? Colors.greenAccent : Colors.redAccent;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(

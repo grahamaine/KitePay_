@@ -2,95 +2,76 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+enum KitepayEnvironment { sandbox, production }
+
 class Kitepay {
   final String apiKey;
-  final String baseUrl = "https://api.kitepaygateway.com/v1";
+  final KitepayEnvironment environment;
 
-  // Constructor using modern Dart named parameters
-  Kitepay({required this.apiKey});
+  Kitepay({
+    required this.apiKey,
+    this.environment = KitepayEnvironment.sandbox,
+  });
 
-  // 1. CREATE A PAYMENT
+  String get _baseUrl => environment == KitepayEnvironment.production
+      ? 'https://api.kitepaygateway.com/v1'
+      : 'https://sandbox.kitepaygateway.com/v1';
+
+  Map<String, String> get _headers => {
+        'Authorization': 'Bearer $apiKey',
+        'Content-Type': 'application/json',
+      };
+
+  /// POST /v1/payments
   Future<Map<String, dynamic>?> createPayment({
     required int amount,
     required String currency,
-    String? email,
-    Map<String, dynamic>? metadata,
+    required String email,
   }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/payments'),
-        headers: _headers(),
-        body: jsonEncode({
-          'amount': amount,
-          'currency': currency,
-          'customer': {
-            'email': email,
-            'metadata': metadata,
-          },
-          'threeDSecure': {'required': true}
-        }),
-      );
-      return _handleResponse(response);
-    } catch (e) {
-      print("Connection Error: $e");
-      return null;
+    final url = Uri.parse('$_baseUrl/payments');
+    final response = await http.post(
+      url,
+      headers: _headers,
+      body: jsonEncode({
+        'amount': amount,
+        'currency': currency,
+        'customer': {'email': email},
+      }),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Payment Error: ${response.body}');
     }
   }
 
-  // 2. LIST RECENT PAYMENTS
-  Future<List<dynamic>?> listPayments(
-      {int limit = 25, String status = 'completed'}) async {
-    try {
-      final url = Uri.parse('$baseUrl/payments?limit=$limit&status=$status');
-      final response = await http.get(url, headers: _headers());
-      final data = _handleResponse(response);
-      return data != null ? data['data'] as List : null;
-    } catch (e) {
-      print("Fetch Error: $e");
-      return null;
-    }
-  }
-
-  // 3. CREATE INSTANT PAYOUT
+  /// POST /v1/payouts
   Future<Map<String, dynamic>?> createPayout({
     required int amount,
     required String currency,
     required String cardNumber,
     required String recipientName,
   }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/payouts'),
-        headers: _headers(),
-        body: jsonEncode({
-          'amount': amount,
-          'currency': currency,
-          'method': 'visa_direct',
-          'recipient': {'cardNumber': cardNumber, 'name': recipientName}
-        }),
-      );
-      return _handleResponse(response);
-    } catch (e) {
-      print("Payout Error: $e");
-      return null;
-    }
-  }
+    final url = Uri.parse('$_baseUrl/payouts');
+    final response = await http.post(
+      url,
+      headers: _headers,
+      body: jsonEncode({
+        'amount': amount,
+        'currency': currency,
+        'method': 'visa_direct',
+        'recipient': {
+          'cardNumber': cardNumber,
+          'name': recipientName,
+        },
+      }),
+    );
 
-  // PRIVATE HELPERS
-  Map<String, String> _headers() {
-    return {
-      'Authorization': 'Bearer $apiKey',
-      'Content-Type': 'application/json',
-      'X-Idempotency-Key': DateTime.now().millisecondsSinceEpoch.toString(),
-    };
-  }
-
-  dynamic _handleResponse(http.Response response) {
-    if (response.statusCode >= 200 && response.statusCode < 300) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
       return jsonDecode(response.body);
     } else {
-      print("API Error: ${response.statusCode} - ${response.body}");
-      return null;
+      throw Exception('Payout Error: ${response.body}');
     }
   }
 }

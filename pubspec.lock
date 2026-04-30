@@ -766,7 +766,7 @@ packages:
       path: kitepay_sdk
       relative: true
     source: path
-    version: "0.0.1"
+    version: "1.0.0"
   leak_tracker:
     dependency: transitive
     description:
