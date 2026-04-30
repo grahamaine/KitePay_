@@ -581,7 +581,7 @@
       "name": "kitepay_sdk",
       "rootUri": "../kitepay_sdk",
       "packageUri": "lib/",
-      "languageVersion": "3.11"
+      "languageVersion": "3.0"
     },
     {
       "name": "leak_tracker",

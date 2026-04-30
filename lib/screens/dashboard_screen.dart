@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import '../widgets/token_list.dart';
+import 'package:kitepay_app_2026/widgets/checkout_widget.dart';
+
 import '../widgets/action_buttons.dart';
-import '../widgets/transaction_history.dart';
 import '../widgets/html_dashboard_renderer.dart';
 import '../widgets/portfolio_card.dart';
-import 'package:kitepay_app_2026/widgets/checkout_widget.dart';
+import '../widgets/token_list.dart';
+import '../widgets/transaction_history.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -18,30 +19,33 @@ class DashboardScreen extends StatelessWidget {
       backgroundColor: const Color(0xFFF8FAFC),
       // Drawer for mobile users (the Sidebar becomes a menu)
       drawer: isDesktop ? null : Drawer(child: _buildSidebarContent()),
-      appBar: isDesktop 
-          ? null 
+      appBar: isDesktop
+          ? null
           : AppBar(
               backgroundColor: Colors.white,
               elevation: 0,
               iconTheme: const IconThemeData(color: Colors.black),
-              title: const Text("KitePay", style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+              title: const Text("KitePay",
+                  style: TextStyle(
+                      color: Colors.blueAccent, fontWeight: FontWeight.bold)),
             ),
       body: Row(
         children: [
-          if (isDesktop) 
+          if (isDesktop)
             Container(
               width: 260,
               decoration: BoxDecoration(
                 color: Colors.white,
-                border: Border(right: BorderSide(color: Colors.black.withValues(alpha: 0.05))),
+                border: Border(
+                    right: BorderSide(
+                        color: Colors.black.withValues(alpha: 0.05))),
               ),
               child: _buildSidebarContent(),
             ),
-
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(
-                horizontal: isDesktop ? 40 : 20, 
+                horizontal: isDesktop ? 40 : 20,
                 vertical: 32,
               ),
               child: Column(
@@ -49,7 +53,7 @@ class DashboardScreen extends StatelessWidget {
                 children: [
                   _buildHeader(context),
                   const SizedBox(height: 32),
-                  
+
                   // Adaptive Portfolio Section
                   _buildAdaptiveHero(isDesktop),
 
@@ -60,16 +64,15 @@ class DashboardScreen extends StatelessWidget {
                     spacing: 24,
                     runSpacing: 24,
                     children: [
+                      _buildSectionCard("Assets", const TokenListWidget(),
+                          width: isDesktop
+                              ? (screenWidth - 350) * 0.55
+                              : double.infinity),
                       _buildSectionCard(
-                        "Assets", 
-                        const TokenListWidget(), 
-                        width: isDesktop ? (screenWidth - 350) * 0.55 : double.infinity
-                      ),
-                      _buildSectionCard(
-                        "Recent Transactions", 
-                        const TransactionHistory(), 
-                        width: isDesktop ? (screenWidth - 350) * 0.40 : double.infinity
-                      ),
+                          "Recent Transactions", const TransactionHistory(),
+                          width: isDesktop
+                              ? (screenWidth - 350) * 0.40
+                              : double.infinity),
                     ],
                   ),
 
@@ -90,7 +93,10 @@ class DashboardScreen extends StatelessWidget {
         return const Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(flex: 2, child: PortfolioCard(totalBalance: "5,820.12", changePercentage: "+5.2%")),
+            Expanded(
+                flex: 2,
+                child: PortfolioCard(
+                    totalBalance: "5,820.12", changePercentage: "+5.2%")),
             SizedBox(width: 24),
             Expanded(flex: 1, child: ActionButtons()),
           ],
@@ -113,7 +119,11 @@ class DashboardScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("KitePay", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blueAccent)),
+          const Text("KitePay",
+              style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blueAccent)),
           const SizedBox(height: 40),
           _sidebarItem(Icons.dashboard_rounded, "Dashboard", active: true),
           _sidebarItem(Icons.account_balance_wallet_rounded, "Wallets"),
@@ -135,19 +145,22 @@ class DashboardScreen extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
           decoration: BoxDecoration(
-            color: active ? Colors.blueAccent.withValues(alpha: 0.1) : Colors.transparent,
+            color: active
+                ? Colors.blueAccent.withValues(alpha: 0.1)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
             children: [
-              Icon(icon, color: active ? Colors.blueAccent : Colors.grey[600], size: 20),
+              Icon(icon,
+                  color: active ? Colors.blueAccent : Colors.grey[600],
+                  size: 20),
               const SizedBox(width: 16),
               Text(
-                label, 
+                label,
                 style: TextStyle(
-                  fontWeight: active ? FontWeight.bold : FontWeight.w500, 
-                  color: active ? Colors.blueAccent : Colors.black87
-                ),
+                    fontWeight: active ? FontWeight.bold : FontWeight.w500,
+                    color: active ? Colors.blueAccent : Colors.black87),
               ),
             ],
           ),
@@ -163,8 +176,13 @@ class DashboardScreen extends StatelessWidget {
         const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Welcome back, User!", style: TextStyle(fontSize: 14, color: Colors.grey)),
-            Text("Overview", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: -0.5)),
+            Text("Welcome back, User!",
+                style: TextStyle(fontSize: 14, color: Colors.grey)),
+            Text("Overview",
+                style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.5)),
           ],
         ),
         // Action button to trigger the Checkout Modal
@@ -173,9 +191,11 @@ class DashboardScreen extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.black,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
-          icon: const Icon(Icons.shopping_cart_outlined, size: 18, color: Colors.white),
+          icon: const Icon(Icons.shopping_cart_outlined,
+              size: 18, color: Colors.white),
           label: const Text("Checkout", style: TextStyle(color: Colors.white)),
         ),
       ],
@@ -189,13 +209,14 @@ class DashboardScreen extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 450),
-          child: CheckoutWidget(),
+          child: const CheckoutWidget(),
         ),
       ),
     );
   }
 
-  Widget _buildSectionCard(String title, Widget content, {required double width}) {
+  Widget _buildSectionCard(String title, Widget content,
+      {required double width}) {
     return Container(
       width: width,
       padding: const EdgeInsets.all(24),
@@ -207,7 +228,9 @@ class DashboardScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(title,
+              style:
+                  const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 20),
           content,
         ],
